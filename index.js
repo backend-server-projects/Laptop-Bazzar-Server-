@@ -23,6 +23,7 @@ const run = async()=>{
     const productsCollection = client.db('laptopBazzar').collection('products')
     const divisionCollection = client.db('laptopBazzar').collection('division')
     const usersCollection = client.db('laptopBazzar').collection('users')
+    const bookmarksCollection = client.db('laptopBazzar').collection('users')
 
     app.get('/products',async(req,res)=>{
         const query ={}
@@ -36,12 +37,42 @@ const run = async()=>{
         res.send(result)
     })
 
+   
 
-    app.post('/users',async(req,res)=>{
-        const product = req.body;
-        const result = await usersCollection.insertOne(product)
+    app.get('/products/:id',async(req,res)=>{
+        const brand = req.params.id;
+        const query = {category: brand}
+        const result = await productsCollection.find(query).toArray();
         res.send(result)
     })
+
+
+    app.post('/users',async(req,res)=>{
+        const user = req.body;
+        const email = user.email;
+        const query = {email:email}
+        const oldUser =await usersCollection.findOne(query)
+       if(email===oldUser?.email){
+        return ;
+       }
+        const result = await usersCollection.insertOne(user)
+        res.send(result)
+    })
+
+    app.put('/users',async(req,res)=>{
+        const role = req.body.role;
+        const email = req.query.email;
+        const filter = {email: email}
+        console.log(role)
+        const options = {upsert: true};
+        const updateDoc={
+            $set:{
+                role:role
+            }
+        }
+        const result = await usersCollection.updateOne(filter,updateDoc,options)
+        res.send(result)
+    }) 
 
     app.get('/users',async(req,res)=>{
         const email = req.query.email
@@ -50,6 +81,18 @@ const run = async()=>{
         res.send(result)
     })
 
+    app.post('/bookmarks',async(req,res)=>{
+        const bookmark = req.body;
+        const result = await bookmarksCollection.insertOne(bookmark);
+        res.send(result)
+    })
+
+    app.get('/bookmarks',async(req,res)=>{
+        const email = req.query.email;
+        const query = {email:email}
+        const result = await bookmarksCollection.find(query).toArray();
+        res.send(result)
+    })
 
     app.get('/division',async(req,res)=>{
         const result = await divisionCollection.find({}).toArray()
