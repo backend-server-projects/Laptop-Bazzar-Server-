@@ -81,6 +81,14 @@ const run = async()=>{
         res.send(result)
     })
 
+
+    app.get('/buyers',async(req,res)=>{
+        const role = req.query.role
+        const query = {role: role}
+        const result = await usersCollection.find(query).toArray()
+        res.send(result)
+    })
+
     app.post('/bookmarks',async(req,res)=>{
         const bookmark = req.body;
         const result = await bookmarksCollection.insertOne(bookmark);
