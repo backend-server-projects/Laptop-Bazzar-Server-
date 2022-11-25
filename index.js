@@ -31,6 +31,13 @@ const run = async()=>{
         res.send(result)
     })
 
+    app.get('/myproducts',async(req,res)=>{
+        const email = req.query.email;
+        const query = {email:email}
+        const result = await productsCollection.find(query).toArray();
+        res.send(result)
+    })
+
     app.post('/products',async(req,res)=>{
         const product = req.body;
         const result = await productsCollection.insertOne(product)
@@ -75,6 +82,11 @@ const run = async()=>{
     }) 
 
     app.get('/users',async(req,res)=>{
+        const result = await usersCollection.find({}).toArray();
+        res.send(result)
+    })
+
+    app.get('/dbusers',async(req,res)=>{
         const email = req.query.email
         const query = {email: email}
         const result = await usersCollection.findOne(query)
@@ -82,10 +94,25 @@ const run = async()=>{
     })
 
 
-    app.get('/buyers',async(req,res)=>{
+    app.get('/sellers',async(req,res)=>{
         const role = req.query.role
         const query = {role: role}
         const result = await usersCollection.find(query).toArray()
+        res.send(result)
+    })
+    
+    app.put('/sellers',async(req,res)=>{
+        const email = req.query.email;
+        const verify = req.body.verify;
+        console.log(email,verify)
+        const filter = {email:email}
+        const options = {upsert:true}
+        const updateSeller = {
+            $set:{
+                verify: verify
+            }
+        }
+        const result = await usersCollection.updateOne(filter,updateSeller,options)
         res.send(result)
     })
 
