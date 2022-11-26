@@ -14,7 +14,7 @@ app.get('/',(req,res)=>{
 })
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const e = require('express');
 const uri = `mongodb+srv://${process.env.DB_NAME}:${process.env.DB_PASS}@cluster0.tgkwl01.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -23,7 +23,8 @@ const run = async()=>{
     const productsCollection = client.db('laptopBazzar').collection('products')
     const divisionCollection = client.db('laptopBazzar').collection('division')
     const usersCollection = client.db('laptopBazzar').collection('users')
-    const bookmarksCollection = client.db('laptopBazzar').collection('users')
+    const bookmarksCollection = client.db('laptopBazzar').collection('bookmarks')
+    const adsCollection = client.db('laptopBazzar').collection('ads')
 
     app.get('/products',async(req,res)=>{
         const query ={}
@@ -50,6 +51,20 @@ const run = async()=>{
         const brand = req.params.id;
         const query = {category: brand}
         const result = await productsCollection.find(query).toArray();
+        res.send(result)
+    })
+
+
+    app.post('/advertise',async(req,res)=>{
+        const ads = req.body;
+        const result = await adsCollection.insertOne(ads)
+        res.send(result)
+    })
+
+
+    app.get('/advertise',async(req,res)=>{
+        const query ={}
+        const result = await adsCollection.find(query).sort({_id:-1}).limit(4).toArray();
         res.send(result)
     })
 
