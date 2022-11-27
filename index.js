@@ -4,7 +4,7 @@ const port = process.env.PORT || 5000;
 require('dotenv').config();
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
-
+const axios = require('axios');
 
 app.use(cors())
 app.use(express.json())
@@ -25,10 +25,16 @@ const run = async()=>{
     const usersCollection = client.db('laptopBazzar').collection('users')
     const bookmarksCollection = client.db('laptopBazzar').collection('bookmarks')
     const adsCollection = client.db('laptopBazzar').collection('ads')
+    const ordersCollection = client.db('laptopBazzar').collection('orders')
 
     app.get('/products',async(req,res)=>{
         const query ={}
         const result = await productsCollection.find(query).sort({_id:-1}).limit(8).toArray();
+        res.send(result)
+    })
+    app.get('/allproducts',async(req,res)=>{
+        const query ={}
+        const result = await productsCollection.find(query).sort({_id:-1}).toArray();
         res.send(result)
     })
 
@@ -55,9 +61,31 @@ const run = async()=>{
     })
 
 
+    app.put('/products',async(req,res)=>{
+        const id = req.query.id;
+        const sold = req.query.sold;
+        const filter = {_id:ObjectId(id)}
+        const option = {upsert:true}
+        const updateProduct = {
+            $set:{
+                sold:sold
+            }
+        }
+        const result = await productsCollection.updateOne(filter,updateProduct,option)
+        res.send(result)
+    })
+
+
     app.post('/advertise',async(req,res)=>{
         const ads = req.body;
         const result = await adsCollection.insertOne(ads)
+        res.send(result)
+    })
+
+    app.delete('/advertise',async(req,res)=>{
+        const id = req.query.id;
+        const query = {id : id}
+        const result = await adsCollection.deleteOne(query)
         res.send(result)
     })
 
@@ -67,6 +95,37 @@ const run = async()=>{
         const result = await adsCollection.find(query).sort({_id:-1}).limit(4).toArray();
         res.send(result)
     })
+
+
+    app.put('/advertise',async(req,res)=>{
+        const ads = req.body.ads;
+        const id = req.query.id;
+        const filter = {_id:ObjectId(id)}
+        const option = {upsert:true}
+        const updateAds={
+            $set:{
+                ads:ads
+            }
+        }
+        const result = await productsCollection.updateOne(filter,updateAds,option)
+        res.send(result)
+    })
+
+
+    app.post('/myOrders',async(req,res)=>{
+        const product = req.body;
+        const result = await ordersCollection.insertOne(product)
+        res.send(result)
+    })
+
+  
+
+    app.get('/myOrders',async(req,res)=>{
+        const result = await ordersCollection.find({}).toArray()
+        res.send(result)
+    })
+
+  
 
 
     app.post('/users',async(req,res)=>{
