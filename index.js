@@ -3,7 +3,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 require("dotenv").config();
 const cors = require("cors");
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken')
 const axios = require("axios");
 
 app.use(cors());
@@ -22,11 +22,31 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 const run = async () => {
+
+
+    const verifyJWT = async (req, res, next) => {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+          return res.status(401).send({ message: "Unauthorize access" });
+        }
+        const token = authHeader.split(" ")[1];
+        jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) =>{
+          if (err) {
+            return res.status(403).send({ message: "forbidden access" });
+          }
+          req.decoded = decoded;
+          next();
+        });
+      };
+
+
   try {
     const productsCollection = client.db("laptopBazzar").collection("products");
     const divisionCollection = client.db("laptopBazzar").collection("division");
     const usersCollection = client.db("laptopBazzar").collection("users");
-    const bookmarksCollection = client.db("laptopBazzar").collection("bookmarks");
+    const bookmarksCollection = client
+      .db("laptopBazzar")
+      .collection("bookmarks");
     const adsCollection = client.db("laptopBazzar").collection("ads");
     const ordersCollection = client.db("laptopBazzar").collection("orders");
 
@@ -39,10 +59,15 @@ const run = async () => {
       res.send(result);
     });
 
-    app.get("/myproducts", async (req, res) => {
+    app.get("/myproducts", verifyJWT, async (req, res) => {
       const email = req.query.email;
+      const decodedEmail = req.decoded.email;
+      
+      if(email !== decodedEmail){
+       return res.status(401).send({message:'unauthorized access'})
+      }
       const query = { email: email };
-      const result = await productsCollection.find(query).sort({_id:-1}).toArray();
+      const result = await productsCollection.find(query).sort({_id:-1 }).toArray();
       res.send(result);
     });
 
@@ -69,7 +94,6 @@ const run = async () => {
       res.send(result);
     });
 
-
     app.put("/products", async (req, res) => {
       const id = req.query.id;
       const sold = req.query.sold;
@@ -88,46 +112,50 @@ const run = async () => {
       res.send(result);
     });
 
-    app.get('/payproducts/:id',async(req,res)=>{
-        const id = req.params.id;
-        console.log(id)
-        const query = {_id:ObjectId(id)}
-        const result = await productsCollection.findOne(query)
-        res.send(result)
-    })
 
-    app.put('/update-sold/:id',async(req,res)=>{
-        const id = req.params.id;
-       
-        const filter = {_id : ObjectId(id)}
-        const options = {upsert:true}
-        const updatePay ={
-            $set:{
-                sold:'sold'
-            }
-        }
-        const result = await productsCollection.updateOne(filter,updatePay,options)
-        res.send(result)
-         
-    })
+    app.get("/payproducts/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query = { _id: ObjectId(id) };
+      const result = await productsCollection.findOne(query);
+      res.send(result);
+    });
 
+    app.put("/update-sold/:id", async (req, res) => {
+      const id = req.params.id;
 
-    app.patch('/update-sold/:id',async(req,res)=>{
-        const id = req.params.id;
-        console.log(id)
-        const filter = {id:id}
-        const option = {upsert:true}
-        const updateOrder={
-            $set:{
-                sold:'paid'
-            }
-        }
-        const result = await ordersCollection.updateOne(filter,updateOrder,option)
-        res.send(result)
-    })
+      const filter = { _id: ObjectId(id) };
+      const options = { upsert: true };
+      const updatePay = {
+        $set: {
+          sold: "sold",
+        },
+      };
+      const result = await productsCollection.updateOne(
+        filter,
+        updatePay,
+        options
+      );
+      res.send(result);
+    });
 
- 
-
+    app.patch("/update-sold/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const filter = { id: id };
+      const option = { upsert: true };
+      const updateOrder = {
+        $set: {
+          sold: "paid",
+        },
+      };
+      const result = await ordersCollection.updateOne(
+        filter,
+        updateOrder,
+        option
+      );
+      res.send(result);
+    });
 
     app.post("/advertise", async (req, res) => {
       const ads = req.body;
@@ -181,12 +209,16 @@ const run = async () => {
       res.send(result);
     });
 
-    app.get('/order',async(req,res)=>{
-        const email = req.query.email;
-        const query = {email:email}
-        const result = await ordersCollection.find(query).toArray()
-        res.send(result)
-    })
+    app.get("/order",verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const decodedEmail = req.decoded.email
+      if(email!==decodedEmail){
+        return res.status(401).send({message:'unauthorized access'})
+      }
+      const query = { email: email };
+      const result = await ordersCollection.find(query).toArray();
+      res.send(result);
+    });
 
     app.post("/users", async (req, res) => {
       const user = req.body;
@@ -238,8 +270,6 @@ const run = async () => {
       res.send(result);
     });
 
-  
-
     app.put("/sellers", async (req, res) => {
       const email = req.query.email;
       const verify = req.body.verify;
@@ -259,14 +289,24 @@ const run = async () => {
       res.send(result);
     });
 
-
     app.get("/buyers", async (req, res) => {
-        const query = { role: 'buyer' };
-        const result = await usersCollection.find(query).toArray();
-        res.send(result);
-      });
+      const query = { role: "buyer" };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
 
-
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
+          expiresIn: "1h",
+        });
+        return res.send({ accessToken: token });
+      }
+      return res.status(403).send({ accessToken: "" });
+    });
 
     app.post("/bookmarks", async (req, res) => {
       const bookmark = req.body;
