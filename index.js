@@ -263,6 +263,7 @@ const run = async () => {
       res.send(result);
     });
 
+
     app.get("/sellers", async (req, res) => {
       const role = req.query.role;
       const query = { role: role };
