@@ -116,7 +116,6 @@ const run = async () => {
 
     app.get("/payproducts/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const query = { _id: ObjectId(id) };
       const result = await ordersCollection.findOne(query);
       res.send(result);
@@ -124,7 +123,6 @@ const run = async () => {
 
     app.put("/update-sold/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id)
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
       const updatePay = {
