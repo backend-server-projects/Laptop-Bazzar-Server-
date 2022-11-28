@@ -112,18 +112,19 @@ const run = async () => {
       res.send(result);
     });
 
+   
 
     app.get("/payproducts/:id", async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const query = { _id: ObjectId(id) };
-      const result = await productsCollection.findOne(query);
+      const result = await ordersCollection.findOne(query);
       res.send(result);
     });
 
     app.put("/update-sold/:id", async (req, res) => {
       const id = req.params.id;
-
+      console.log(id)
       const filter = { _id: ObjectId(id) };
       const options = { upsert: true };
       const updatePay = {
@@ -141,8 +142,7 @@ const run = async () => {
 
     app.patch("/update-sold/:id", async (req, res) => {
       const id = req.params.id;
-      console.log(id);
-      const filter = { id: id };
+      const filter = { _id: ObjectId(id) };
       const option = { upsert: true };
       const updateOrder = {
         $set: {
@@ -204,8 +204,10 @@ const run = async () => {
       res.send(result);
     });
 
-    app.get("/myOrders", async (req, res) => {
-      const result = await ordersCollection.find({}).toArray();
+    app.get("/myOrders",verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const query = {email:email}
+      const result = await ordersCollection.find(query).toArray();
       res.send(result);
     });
 
@@ -314,7 +316,7 @@ const run = async () => {
       res.send(result);
     });
 
-    app.get("/bookmarks", async (req, res) => {
+    app.get("/bookmarks",verifyJWT, async (req, res) => {
       const email = req.query.email;
       const query = { email: email };
       const result = await bookmarksCollection.find(query).toArray();
